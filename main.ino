@@ -1,7 +1,7 @@
 #include <Servo.h>
 #include "Gizmo.h"
 
-Servo DriveL, DriveR, Arm, ClawL, ClawR, Dispenser;
+Servo DriveL, DriveR, Arm, Dispenser, ClawL, ClawR, Manny;
 Gizmo gizmo;
 
 void setup() {
@@ -15,16 +15,24 @@ void setup() {
   pinMode(GIZMO_SERVO_1, OUTPUT);
   pinMode(GIZMO_SERVO_2, OUTPUT);
   pinMode(GIZMO_SERVO_3, OUTPUT);
+  pinMode(21, OUTPUT);
 
   DriveL.attach(GIZMO_MOTOR_1);
   Arm.attach(GIZMO_MOTOR_2);
   DriveR.attach(GIZMO_MOTOR_3);
+
+  Dispenser.attach(21);
   ClawL.attach(GIZMO_SERVO_1);
   ClawR.attach(GIZMO_SERVO_2);
-  Dispenser.attach(GIZMO_SERVO_3);
+  Manny.attach(GIZMO_SEROVO_3);
 
   pinMode(LED_BUILTIN, OUTPUT);
 }
+
+int targetClawL = 90;
+int targetClawR = 90;          // Servo position (0 or 90 degrees)
+int targetDispenser = 10;
+int targetManny = 0;
 
 void loop() {
   digitalWrite(LED_BUILTIN, !digitalRead(LED_BUILTIN));
@@ -40,19 +48,38 @@ void loop() {
   targetArmUp = gizmo.getButton(GIZMO_BUTTON_RT);
   int targetArm = targetArmDown ? 180 : targetArmUp ? 0 : 90;
 
-  // bool targetClawL, targetClawR;
-  // targetClawL = gizmo.getButton(GIZMO_BUTTON_LSHOULDER);
-  // targetClawR = gizmo.getButton(GIZMO_BUTTON_RSHOULDER);
-  // int targetClaw = targetArmDown ? 0 : targetArmUp ? 90 : 180;
+  bool leftBump = gizmo.getButton(GIZMO_BUTTON_LSHOULDER);
+  bool rightBump = gizmo.getButton(GIZMO_BUTTON_RSHOULDER);
 
-  // bool targetDispenser;
-  // targetDispenser = gizmo.getButton(GIZMO_BUTTON_B);
-  // int targetDispense = targetDispenser ? 180 : 90;
+  if(leftBump){
+    targetClawL = 90;
+    targetClawR = 90;
+    delay(20);
+  } else if(rightBump){
+    targetClawL = 0;
+    targetClawR = 180;
+    Serial.println("test");
+    delay(20);
+  }
+
+  bool dispensing = gizmo.getButton(GIZMO_BUTTON_B);
+  if(dispensing){
+    Dispenser.write(110);
+    delay(20);
+  }
+
+  bool seatBelt = gizmo.getButton(GIZMO_BUTTON_X);
+  if(seatBelt){
+    targetManny = 180;
+    delay(20);
+  }
 
   DriveL.write(targetL);
   DriveR.write(targetR);
   Arm.write(targetArm);
-  // Dispenser.write(targetDispense);
+  ClawL.write(targetClawL);
+  ClawR.write(targetClawR);
+  Manny.write(targetManny);
 
   delay(20);
 }
